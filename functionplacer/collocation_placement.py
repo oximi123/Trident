@@ -38,6 +38,7 @@ class Function:
 def function_collocation_placement(vms, functions):
     N = len(functions)
     vm_pool = sorted(vms, key=lambda v: v.resource_ratio())
+    M = len(vm_pool)
 
     # Step 1: Build collocation matrix
     collocation_matrix = []
@@ -56,16 +57,19 @@ def function_collocation_placement(vms, functions):
                 'count': hij
             })
 
-    # Step 2: Compute dominant ratio
-    total_weight = sum(e['count'] for e in collocation_matrix)
-    if total_weight == 0:
-        dominant_ratio = 0
-    else:
-        dominant_ratio = sum((e['ratio'] * e['count']) for e in collocation_matrix) / total_weight
+    def cal_dominant_ratio():
+        total_weight = sum(e['count'] for e in collocation_matrix)
+        if total_weight == 0:
+            dominant_ratio = 0
+        else:
+            dominant_ratio = sum((e['ratio'] * e['count']) for e in collocation_matrix) / total_weight
+        return dominant_ratio
 
     # Step 3: Place collocated pairs greedily
     placements = defaultdict(list)
-    for vm in vm_pool:
+    dominant_ratio = cal_dominant_ratio()
+    for m in range(M):
+        vm = sorted(vm_pool, key=lambda x: abs(dominant_ratio - vm.resource_ratio()))[0]
         sorted_pairs = sorted(collocation_matrix, key=lambda x: abs(x['ratio'] - vm.resource_ratio()))
         for entry in sorted_pairs:
             f1_id, f2_id = entry['pair']

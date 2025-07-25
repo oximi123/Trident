@@ -4,12 +4,6 @@ from provisioner.agent import ReplayBuffer
 
 
 def select_ppo_action(model, state):
-    """
-    Selects an action using the PPO policy (stochastic) and returns the log probability.
-    :param model: the ActorCritic model
-    :param state: input state as torch.Tensor, shape [input_dim]
-    :return: (action, log_prob)
-    """
     if not isinstance(state, torch.Tensor):
         state = torch.tensor(state, dtype=torch.float32)
 
@@ -22,7 +16,7 @@ def select_ppo_action(model, state):
     return action.item(), log_prob.item()
 
 
-def train_hrl(higher_agent, lower_agents, env, num_episodes=100):
+def train_hrl(higher_agent, lower_agents, env, num_episodes=1000):
     for episode in range(num_episodes):
         state_high = env.get_high_state()
         action_high, log_prob = select_ppo_action(higher_agent.model, state_high)
