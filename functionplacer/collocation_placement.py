@@ -1,7 +1,7 @@
 from collections import defaultdict
 import numpy as np
 
-
+# VM class
 class VM:
     def __init__(self, vm_id, cpu, mem, type):
         self.vm_id = vm_id
