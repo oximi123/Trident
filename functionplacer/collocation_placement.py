@@ -2,15 +2,14 @@ from collections import defaultdict
 import numpy as np
 
 # VM class
-class VM:
-    def __init__(self, vm_id, cpu, mem, type):
+class Instance:
+    def __init__(self, vm_id, cpu, mem):
         self.vm_id = vm_id
         self.cpu_capacity = cpu
         self.mem_capacity = mem
         self.available_cpu = cpu
         self.available_mem = mem
         self.placements = []
-        self.type = type
 
     def can_host(self, cpu, mem):
         return self.available_cpu >= cpu and self.available_mem >= mem
@@ -23,6 +22,9 @@ class VM:
     def resource_ratio(self):
         return self.cpu_capacity / self.mem_capacity
 
+    def clear(self):
+        self.available_cpu = self.cpu_capacity
+        self.available_mem = self.mem_capacity
 
 class Function:
     def __init__(self, func_id, cpu, mem, count):

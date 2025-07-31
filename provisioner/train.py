@@ -1,5 +1,6 @@
 import torch
 
+from env.serverless_env import HrlCloudEnv
 from provisioner.agent import ReplayBuffer
 
 # train logic
@@ -16,32 +17,33 @@ def select_ppo_action(model, state):
     return action.item(), log_prob.item()
 
 
-def train_hrl(higher_agent, lower_agents, env, num_episodes=1000):
+def train_hrl(higher_agent, lower_agents, env : HrlCloudEnv, num_episodes=1000):
     for episode in range(num_episodes):
-        state_high = env.get_high_state()
-        action_high, log_prob = select_ppo_action(higher_agent.model, state_high)
-        selected_vms = env.apply_vm_selection(action_high)
+        for T in range(env.horizon_length):
+            state_high = env.get_high_level_state()
+            action_high, log_prob = select_ppo_action(higher_agent.model, state_high)
+            selected_vms = env.high_level_step(action_high)
 
-        lower_buffers = [ReplayBuffer() for _ in selected_vms]
-        lower_policies = lower_agents
+            lower_buffers = [ReplayBuffer() for _ in selected_vms]
+            lower_policies = lower_agents
 
-        memory_high = []
+            memory_high = []
 
-        for t in range(env.period_length):
-            for i, vm_id in enumerate(selected_vms):
-                state_low = env.get_low_state(vm_id)
-                action_low = lower_policies[i].select_action(state_low)
-                reward, next_state = env.apply_vm_scaling(vm_id, action_low)
-                lower_buffers[i].push(state_low, action_low, reward, next_state)
+            for t in range(env.period_length):
+                states_low = env.get_low_level_state()
+                actions_low = []
+                for i, vm_id in enumerate(selected_vms):
+                    state_low = states_low[i]
+                    action_low = lower_policies[i].select_action(state_low)
+                    actions_low.append(action_low)
+                low_reward, next_state = env.low_level_step(actions_low)
+                for i, vm_id in enumerate(selected_vms):
+                    lower_buffers[i].push(states_low[i], actions_low[i], low_reward, next_state)
 
-        for i, agent in enumerate(lower_policies):
-            agent.update(lower_buffers[i])
+            for i, agent in enumerate(lower_policies):
+                agent.update(lower_buffers[i])
 
-        # Store memory for PPO
-        total_reward = env.compute_utility()
-        memory_high.append((state_high, action_high, log_prob, torch.tensor(total_reward)))
-
-        # PPO update
-        higher_agent.update(memory_high)
-
-        print(f"Episode {episode}: Utility = {total_reward:.3f}")
+            # Store memory for PPO
+            high_reward = env.get_high_level_reward()
+            memory_high.append((state_high, action_high, log_prob, torch.tensor(high_reward)))
+            higher_agent.update(memory_high)
