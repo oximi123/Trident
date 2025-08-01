@@ -1,10 +1,6 @@
-# %%
-import os
 import random
 
-# %%
 import gym
-import pandas
 import pandas as pd
 import numpy as np
 
@@ -88,7 +84,6 @@ def load_vm2config():
     vm_config = pd.read_csv(path_prefix + 'data/vmConfig.csv')
     vm2config = {}
     group2vms = {}
-    # %%
     for index, row in vm_config.iterrows():
         vm2config[row[0]] = {
             'cpu': row[1],
@@ -112,7 +107,6 @@ def load_vm2fail():
     return vm2fail
 
 
-# 加载vm的price数据
 def load_vm2price(ondemand_scale=4):
     spot_vm_types = set()
     ondemand_vm_types = set()
@@ -131,7 +125,6 @@ def load_vm2price(ondemand_scale=4):
                 idx = id
                 break
         avg = sum(price[idx:]) / (len(price) - idx)
-        # print(column + ':' + str(avg * 5))
         price[0:idx] = [avg for _ in range(idx)]
         vm2price['Spot-' + column] = np.array(price)
         vm2price['Ondemand-' + column] = np.array(price) * ondemand_scale
@@ -153,21 +146,12 @@ vm2fail = load_vm2fail()
 vm2price = load_vm2price()
 mem_per_request, request_pattern, cpu_per_request, execution_time = load_workload()
 
-# %%
-from gym.spaces import Box
+class ServerlessEnv(gym.Env):
 
-
-def init_instance(env):
-    global env_instance
-    env_instance = env
-
-
-class HrlCloudEnv(gym.Env):
-
-    def __init__(self, prediction_model, placement_algorithm, K=6, SLO=0.9, horizon_length=24, period_length=60,
+    def __init__(self, prediction_model, placement_algorithm, K=6, SLO=0.9, horizon_length=24, period_length=20, data_len = 1440,
                  forward_steps=10, alpha=1e-3,
-                 beta=100, iter_steps=10, init_method='weighted', action_step=0.03, random_trace=False, train=True):
-        super(HrlCloudEnv, self).__init__()
+                 beta=100, iter_steps=10, init_method='weighted', action_step=0.01, random_trace=False, train=True):
+        super(ServerlessEnv, self).__init__()
         self.prediction_model = prediction_model
         self.placement_algorithm = placement_algorithm
         self.num_agents = K
@@ -175,13 +159,13 @@ class HrlCloudEnv(gym.Env):
         self.period_length = period_length
         self.train = train
         self.action_step = action_step
-        self.low_level_action_space = 3  # +1，-1，0
+        self.low_level_action_space = 20
         self.high_level_action_space = len(vm2config)
         self.SLO = SLO
         self.provisioned_VM = {}
         self.current_time = 0
         self.current_period = 0
-        self.data_len = 1440
+        self.data_len = data_len
         self.alpha = alpha
         self.beta = beta
         self.forward_steps = forward_steps
@@ -205,7 +189,7 @@ class HrlCloudEnv(gym.Env):
             0: 0,
             1: 1,
             2: -1
-        }  # 从action映射到买VM的个数
+        }
         self.reward = {
             'high-level': None,
             'low-level': None
@@ -218,9 +202,7 @@ class HrlCloudEnv(gym.Env):
         self.low_level_best_provision = {}
         self.low_level_best_util = -100000000000000000
         self.__init__data()
-        # self.__init_vm_purchase__()
 
-    # 根据cluster id加载对应的cluster data: request, execution, memory
     def get_agent_num(self):
         return self.num_agents
 

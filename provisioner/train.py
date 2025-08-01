@@ -1,6 +1,6 @@
 import torch
 
-from env.serverless_env import HrlCloudEnv
+from env.serverless_env import ServerlessEnv
 from provisioner.agent import ReplayBuffer
 
 # train logic
@@ -17,7 +17,7 @@ def select_ppo_action(model, state):
     return action.item(), log_prob.item()
 
 
-def train_hrl(higher_agent, lower_agents, env : HrlCloudEnv, num_episodes=1000):
+def train_hrl(higher_agent, lower_agents, env : ServerlessEnv, num_episodes=1000):
     for episode in range(num_episodes):
         for T in range(env.horizon_length):
             state_high = env.get_high_level_state()
