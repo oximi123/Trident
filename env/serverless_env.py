@@ -145,7 +145,7 @@ vm2config = load_vm2config()
 vm2fail = load_vm2fail()
 vm2price = load_vm2price()
 mem_per_request, request_pattern, cpu_per_request, execution_time = load_workload()
-#
+
 class ServerlessEnv(gym.Env):
 
     def __init__(self, prediction_model, placement_algorithm, K=6, SLO=0.9, horizon_length=24, period_length=20, data_len = 1440,
