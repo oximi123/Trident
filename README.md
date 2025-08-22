@@ -13,7 +13,7 @@ Trident is a provider-oriented resource management framework for serverless comp
 
 ##### env
 
-This directory contains the serverless simulation environment implemented by Open AI `Gym` . To use it, please download the serverless dataset from https://github.com/Azure/AzurePublicDataset and put the dataset into this directory.
+This directory contains the serverless simulation environment implemented by Open AI `Gym`. To use it, please download the serverless dataset from https://github.com/Azure/AzurePublicDataset and put the dataset into this directory.
 
 ##### functionplacer
 
